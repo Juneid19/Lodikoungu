@@ -284,7 +284,39 @@
         color: #f9fafb;
         white-space: nowrap;
         overflow: hidden;
+        position: relative;
+        height: 22px;
+        display: flex;
+        align-items: center;
+    }
+
+    /* Efek teks berjalan (marquee) */
+    .track-title.marquee {
+        animation: marquee 15s linear infinite;
+        padding-left: 100%;
+        display: inline-block;
+        white-space: nowrap;
+    }
+
+    .track-title.marquee:hover {
+        animation-play-state: paused;
+    }
+
+    @keyframes marquee {
+        0% {
+            transform: translateX(0%);
+        }
+        100% {
+            transform: translateX(-100%);
+        }
+    }
+
+    /* Gaya untuk teks yang tidak perlu marquee */
+    .track-title.no-marquee {
+        animation: none;
+        padding-left: 0;
         text-overflow: ellipsis;
+        overflow: hidden;
     }
 
     .controls {
@@ -464,6 +496,11 @@
         .controls {
             margin-top: 8px;
         }
+
+        /* Sesuaikan animasi marquee untuk mobile */
+        .track-title.marquee {
+            animation: marquee 12s linear infinite;
+        }
     }
 
     @media (max-width: 480px) {
@@ -473,6 +510,11 @@
         .btn-play {
             width: 58px;
             height: 58px;
+        }
+        
+        .track-title.marquee {
+            animation: marquee 10s linear infinite;
+            font-size: 14px;
         }
     }
 </style>
@@ -520,7 +562,7 @@
 
         <div class="meta">
             <div class="track-artist" id="trackArtist">Mengambil metadata artis...</div>
-            <div class="track-title" id="trackTitle">Mengambil judul lagu...</div>
+            <div class="track-title no-marquee" id="trackTitle">Mengambil judul lagu...</div>
         </div>
 
         <div class="controls">
@@ -568,6 +610,29 @@
     const DEFAULT_COVER = "https://www.radioplug.co.uk/img/channel/06-07-2019-08-11-00.png";
     let isPlaying = false;
     let lastStreamTitle = '';
+
+    // Fungsi untuk mengaktifkan/menonaktifkan efek marquee
+    function updateMarqueeEffect() {
+        // Hapus class marquee terlebih dahulu
+        trackTitle.classList.remove('marquee');
+        trackTitle.classList.add('no-marquee');
+        
+        // Cek jika teks terlalu panjang untuk container
+        setTimeout(() => {
+            const containerWidth = trackTitle.parentElement.offsetWidth;
+            const textWidth = trackTitle.scrollWidth;
+            
+            // Jika teks lebih panjang dari container, aktifkan marquee
+            if (textWidth > containerWidth) {
+                trackTitle.classList.remove('no-marquee');
+                trackTitle.classList.add('marquee');
+                
+                // Atur durasi animasi berdasarkan panjang teks
+                const duration = Math.max(10, textWidth / 30); // Durasi minimal 10 detik
+                trackTitle.style.animationDuration = `${duration}s`;
+            }
+        }, 100);
+    }
 
     // Fungsi untuk mendapatkan cover reciter
     function getReciterCover(artist, title) {
@@ -692,6 +757,9 @@
         
         // Gunakan cover yang disediakan, atau default
         coverImage.src = cover || DEFAULT_COVER;
+        
+        // Update efek marquee setelah teks diubah
+        updateMarqueeEffect();
     }
 
     // Pecah "Artist - Title"
@@ -996,6 +1064,12 @@
             trackArtist.textContent = 'Stream tetap dapat diputar';
         }
     })();
+
+    // Event listener untuk resize window (update marquee saat ukuran berubah)
+    window.addEventListener('resize', updateMarqueeEffect);
+    
+    // Inisialisasi awal marquee effect
+    updateMarqueeEffect();
 </script>
 </body>
 </html>
